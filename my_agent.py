@@ -2,23 +2,29 @@
 
 """
 File Name:      my_agent.py
-Authors:        TODO: Your names here!
-Date:           TODO: The date you finally started working on this.
+Authors:        Jeremy Webb
+Date:           11/6/20
 
 Description:    Python file for my agent.
 Source:         Adapted from recon-chess (https://pypi.org/project/reconchess/)
 """
 
+
+
 import random
 import chess
 from player import Player
+from sf_eval import SF_eval
+import sys
 
 
 # TODO: Rename this class to what you would like your bot to be named during the game.
 class MyAgent(Player):
 
     def __init__(self):
-        pass
+        self.color = None
+        self.current_board = None
+        self.engine = chess.engine.SimpleEngine.popen_uci("stockfish_20090216_x64_bmi2")
         
     def handle_game_start(self, color, board):
         """
@@ -28,7 +34,12 @@ class MyAgent(Player):
         :param board: chess.Board -- initial board state
         :return:
         """
+        print('\--------------Starting Game--------------/')
+        print(color)
+        print(board)
         # TODO: implement this method
+        self.color = color
+        self.current_board = board
         pass
         
     def handle_opponent_move_result(self, captured_piece, captured_square):
@@ -38,6 +49,9 @@ class MyAgent(Player):
         :param captured_piece: bool - true if your opponents captured your piece with their last move
         :param captured_square: chess.Square - position where your piece was captured
         """
+        print('\--------------Opponent Move--------------/')
+        print(captured_piece)
+        print(captured_square)
         pass
 
     def choose_sense(self, possible_sense, possible_moves, seconds_left):
@@ -52,6 +66,10 @@ class MyAgent(Player):
         :example: choice = chess.A1
         """
         # TODO: update this method
+        print('\--------------Choose Sense--------------/')
+        print(possible_sense)
+        print(possible_moves)
+        print(seconds_left)
         return random.choice(possible_sense)
         
     def handle_sense_result(self, sense_result):
@@ -68,6 +86,8 @@ class MyAgent(Player):
             (A6, None), (B6, None), (C8, None)
         ]
         """
+        print('\--------------Handle Sense--------------/')
+        print(sense_result)
         # TODO: implement this method
         # Hint: until this method is implemented, any senses you make will be lost.
         pass
@@ -86,6 +106,9 @@ class MyAgent(Player):
         :example: choice = chess.Move(chess.G7, chess.G8, promotion=chess.KNIGHT) *default is Queen
         """
         # TODO: update this method
+        print('\--------------Choose Move--------------/')
+        print(possible_moves)
+        print(seconds_left)
         choice = random.choice(possible_moves)
         return choice
         
@@ -100,6 +123,8 @@ class MyAgent(Player):
         :param captured_piece: bool - true if you captured your opponents piece
         :param captured_square: chess.Square - position where you captured the piece
         """
+        print('\--------------Handle Move--------------/')
+        print(requested_move, taken_move, reason, captured_piece, captured_square)
         # TODO: implement this method
         pass
         
@@ -111,4 +136,7 @@ class MyAgent(Player):
         :param win_reason: String -- the reason for the game ending
         """
         # TODO: implement this method
+        print('\--------------Game End--------------/')
+        print(winner_color)
+        print(win_reason)
         pass
