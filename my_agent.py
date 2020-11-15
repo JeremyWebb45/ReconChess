@@ -12,9 +12,12 @@ Source:         Adapted from recon-chess (https://pypi.org/project/reconchess/)
 
 
 import random
+from copy import deepcopy, copy
+
 import chess
+import chess.engine
 from player import Player
-from sf_eval import SF_eval
+from mcts import mcts
 import sys
 
 
@@ -34,10 +37,7 @@ class MyAgent(Player):
         :param board: chess.Board -- initial board state
         :return:
         """
-        print('\--------------Starting Game--------------/')
-        print(color)
-        print(board)
-        # TODO: implement this method
+
         self.color = color
         self.current_board = board
         pass
@@ -49,6 +49,8 @@ class MyAgent(Player):
         :param captured_piece: bool - true if your opponents captured your piece with their last move
         :param captured_square: chess.Square - position where your piece was captured
         """
+        #TODO: Assume our opponents policy is random and update our board
+        #TODO: If we have a piece captured, update the board with known piece position
         print('\--------------Opponent Move--------------/')
         print(captured_piece)
         print(captured_square)
@@ -65,7 +67,9 @@ class MyAgent(Player):
         :return: chess.SQUARE -- the center of 3x3 section of the board you want to sense
         :example: choice = chess.A1
         """
-        # TODO: update this method
+
+        #TODO: Honestly not sure we might need some sort of policy to decide where to sense, or we can go random
+
         print('\--------------Choose Sense--------------/')
         print(possible_sense)
         print(possible_moves)
@@ -88,7 +92,8 @@ class MyAgent(Player):
         """
         print('\--------------Handle Sense--------------/')
         print(sense_result)
-        # TODO: implement this method
+        # TODO: Sense the board, update our current board with this sense
+        # TODO: Fill in the rest of the board with guesses as to where the remaining unsensed enemy pieces are
         # Hint: until this method is implemented, any senses you make will be lost.
         pass
 
@@ -106,10 +111,14 @@ class MyAgent(Player):
         :example: choice = chess.Move(chess.G7, chess.G8, promotion=chess.KNIGHT) *default is Queen
         """
         # TODO: update this method
-        print('\--------------Choose Move--------------/')
         print(possible_moves)
-        print(seconds_left)
-        choice = random.choice(possible_moves)
+        print(list(self.current_board.legal_moves))
+
+        state = BoardState(self.engine, possible_moves, self.current_board, int(self.color))
+        print('Beginning Search')
+        tree = mcts(timeLimit=10)
+        choice = tree.search(initialState=state)
+        print(choice)
         return choice
         
     def handle_move_result(self, requested_move, taken_move, reason, captured_piece, captured_square):
@@ -140,3 +149,26 @@ class MyAgent(Player):
         print(winner_color)
         print(win_reason)
         pass
+
+
+# class BoardState:
+#
+#     def __init__(self, engine=None, possible_moves=[], board=chess.Board(), player=1):
+#         self.team = player
+#         self.board_state = board
+#         self.moves = possible_moves
+#         self.engine = engine
+#
+#     def getPossibleActions(self):
+#         return self.moves
+#
+#     def takeAction(self, a):
+#         board_copy = copy(self.board_state)
+#         board_copy.push(a)
+#         return BoardState(self.engine, list(board_copy.legal_moves), board_copy, self.team * -1)
+#
+#     def isTerminal(self):
+#         return self.board_state.is_checkmate()
+#
+#     def getReward(self):
+#         return self.engine.analyse(self.board_state, chess.engine.Limit(depth=20)) * self.team
