@@ -7,38 +7,23 @@ import chess.engine
 from copy import deepcopy, copy
 
 
-def mcts(board=chess.Board(), time_limit=10, player=1):
+def mcts(board=chess.Board(), time_limit=15, player=1):
     start_time = time.time()
-    root = {'state': board, 'turn': player, 'num_wins': 11, 'num_sims': 21, 'children': []}
-    node1 = {'parent': root, 'state': board, 'turn': player * -1, 'num_wins': 7, 'num_sims': 10, 'children': []}
-    node2 = {'parent': root, 'state': board, 'turn': player * -1, 'num_wins': 0, 'num_sims': 3, 'children': []}
-    node3 = {'parent': root, 'state': board, 'turn': player * -1, 'num_wins': 3, 'num_sims': 8, 'children': []}
-    root['children'].append(node1)
-    root['children'].append(node2)
-    root['children'].append(node3)
-    node4 = {'parent': node1, 'state': board, 'turn': player, 'num_wins': 2, 'num_sims': 4, 'children': []}
-    node5 = {'parent': node1, 'state': board, 'turn': player, 'num_wins': 1, 'num_sims': 6, 'children': []}
-    node1['children'].append(node4)
-    node1['children'].append(node5)
-    node6 = {'parent': node3, 'state': board, 'turn': player, 'num_wins': 1, 'num_sims': 2, 'children': []}
-    node7 = {'parent': node3, 'state': board, 'turn': player, 'num_wins': 2, 'num_sims': 3, 'children': []}
-    node8 = {'parent': node3, 'state': board, 'turn': player, 'num_wins': 2, 'num_sims': 3, 'children': []}
-    node3['children'].append(node6)
-    node3['children'].append(node7)
-    node3['children'].append(node8)
-    node9 = {'parent': node5, 'state': board, 'turn': player * -1, 'num_wins': 2, 'num_sims': 3, 'children': []}
-    node0 = {'parent': node5, 'state': board, 'turn': player * -1, 'num_wins': 3, 'num_sims': 3, 'children': []}
-    node5['children'].append(node9)
-    node5['children'].append(node0)
-    selected = sel(root, player)
-    print(selected)
-    new_node = expand(selected)
-    print(new_node['parent']['num_wins'])
-    print(new_node['parent']['num_sims'])
-    result = sim(new_node['state'], player)
-    print(result)
-    backprop(new_node, result)
-    print(root)
+    root = {'state': board, 'turn': player, 'num_wins': 0, 'num_sims': 0, 'children': []}
+    while time.time() - start_time < time_limit:
+        selected = sel(root, player)
+        # print(selected)
+        new_node = expand(selected)
+        selected['children'].append(new_node)
+        # print(new_node)
+        result = sim(new_node['state'], player)
+        print(result)
+        # print(result)
+        backprop(new_node, result)
+        # print(root)
+    print(root['num_wins'])
+    print(root['num_sims'])
+    print_tree(root)
 
 
 def backprop(node, result):
@@ -93,6 +78,39 @@ def sim(board, team):
             next_move = random.choice(possible_moves)
             board_copy.push(next_move)
             curr_state = board_copy
+
+
+def print_tree(root, i=0):
+    print('layer: ' + str(i))
+    print(root['state'].fen())
+    j = i + 1
+    for child in root['children']:
+        print_tree(child, j)
+
+
+def build_tree(board, player):
+    root = {'state': board, 'turn': player, 'num_wins': 11, 'num_sims': 21, 'children': []}
+    node1 = {'parent': root, 'state': board, 'turn': player * -1, 'num_wins': 7, 'num_sims': 10, 'children': []}
+    node2 = {'parent': root, 'state': board, 'turn': player * -1, 'num_wins': 0, 'num_sims': 3, 'children': []}
+    node3 = {'parent': root, 'state': board, 'turn': player * -1, 'num_wins': 3, 'num_sims': 8, 'children': []}
+    root['children'].append(node1)
+    root['children'].append(node2)
+    root['children'].append(node3)
+    node4 = {'parent': node1, 'state': board, 'turn': player, 'num_wins': 2, 'num_sims': 4, 'children': []}
+    node5 = {'parent': node1, 'state': board, 'turn': player, 'num_wins': 1, 'num_sims': 6, 'children': []}
+    node1['children'].append(node4)
+    node1['children'].append(node5)
+    node6 = {'parent': node3, 'state': board, 'turn': player, 'num_wins': 1, 'num_sims': 2, 'children': []}
+    node7 = {'parent': node3, 'state': board, 'turn': player, 'num_wins': 2, 'num_sims': 3, 'children': []}
+    node8 = {'parent': node3, 'state': board, 'turn': player, 'num_wins': 2, 'num_sims': 3, 'children': []}
+    node3['children'].append(node6)
+    node3['children'].append(node7)
+    node3['children'].append(node8)
+    node9 = {'parent': node5, 'state': board, 'turn': player * -1, 'num_wins': 2, 'num_sims': 3, 'children': []}
+    node0 = {'parent': node5, 'state': board, 'turn': player * -1, 'num_wins': 3, 'num_sims': 3, 'children': []}
+    node5['children'].append(node9)
+    node5['children'].append(node0)
+    return root
 
 
 # state = BoardState(list(chess.Board().legal_moves), chess.Board(), 1)
