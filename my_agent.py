@@ -12,13 +12,8 @@ Source:         Adapted from recon-chess (https://pypi.org/project/reconchess/)
 
 
 import random
-from copy import deepcopy, copy
-
-import chess
-import chess.engine
 from player import Player
-from mcts import mcts
-import sys
+from mcts import MCTS
 
 
 # TODO: Rename this class to what you would like your bot to be named during the game.
@@ -27,7 +22,6 @@ class MyAgent(Player):
     def __init__(self):
         self.color = None
         self.current_board = None
-        self.engine = chess.engine.SimpleEngine.popen_uci("stockfish_20090216_x64_bmi2")
         
     def handle_game_start(self, color, board):
         """
@@ -54,6 +48,8 @@ class MyAgent(Player):
         print('\--------------Opponent Move--------------/')
         print(captured_piece)
         print(captured_square)
+        moves = list(self.current_board.legal_moves)
+        self.current_board.push(random.choice(moves))
         pass
 
     def choose_sense(self, possible_sense, possible_moves, seconds_left):
@@ -111,15 +107,15 @@ class MyAgent(Player):
         :example: choice = chess.Move(chess.G7, chess.G8, promotion=chess.KNIGHT) *default is Queen
         """
         # TODO: update this method
+        print('\--------------Choose Move--------------/')
         print(possible_moves)
         print(list(self.current_board.legal_moves))
+        search_tree = MCTS(5, self.color, self.current_board)
+        search_tree.search()
+        move = search_tree.pick_move()['move']
+        self.current_board.push(move)
 
-        state = BoardState(self.engine, possible_moves, self.current_board, int(self.color))
-        print('Beginning Search')
-        tree = mcts(timeLimit=10)
-        choice = tree.search(initialState=state)
-        print(choice)
-        return choice
+        return move
         
     def handle_move_result(self, requested_move, taken_move, reason, captured_piece, captured_square):
         """
@@ -149,26 +145,3 @@ class MyAgent(Player):
         print(winner_color)
         print(win_reason)
         pass
-
-
-# class BoardState:
-#
-#     def __init__(self, engine=None, possible_moves=[], board=chess.Board(), player=1):
-#         self.team = player
-#         self.board_state = board
-#         self.moves = possible_moves
-#         self.engine = engine
-#
-#     def getPossibleActions(self):
-#         return self.moves
-#
-#     def takeAction(self, a):
-#         board_copy = copy(self.board_state)
-#         board_copy.push(a)
-#         return BoardState(self.engine, list(board_copy.legal_moves), board_copy, self.team * -1)
-#
-#     def isTerminal(self):
-#         return self.board_state.is_checkmate()
-#
-#     def getReward(self):
-#         return self.engine.analyse(self.board_state, chess.engine.Limit(depth=20)) * self.team
