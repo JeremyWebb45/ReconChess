@@ -18,7 +18,9 @@ from player import Player
 class MyAgent(Player):
 
     def __init__(self):
-        pass
+
+        self.current_board = None
+        self.color = None
         
     def handle_game_start(self, color, board):
         """
@@ -29,7 +31,8 @@ class MyAgent(Player):
         :return:
         """
         # TODO: implement this method
-        pass
+        self.current_board = board
+        self.color = color
         
     def handle_opponent_move_result(self, captured_piece, captured_square):
         """
@@ -38,7 +41,10 @@ class MyAgent(Player):
         :param captured_piece: bool - true if your opponents captured your piece with their last move
         :param captured_square: chess.Square - position where your piece was captured
         """
-        pass
+        #if captured_piece:
+        moves = list(self.current_board.legal_moves)
+        self.current_board.push(random.choice(moves))
+
 
     def choose_sense(self, possible_sense, possible_moves, seconds_left):
         """
@@ -51,8 +57,69 @@ class MyAgent(Player):
         :return: chess.SQUARE -- the center of 3x3 section of the board you want to sense
         :example: choice = chess.A1
         """
-        # TODO: update this method
-        return random.choice(possible_sense)
+        moves = list(self.current_board.legal_moves)
+        our_pieces = []
+        for move in moves:
+            pos = str(move)[0:2]
+            if pos not in our_pieces:
+                our_pieces.append(pos)
+
+        columns = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+        piece_sence = []
+        for piece in our_pieces:
+            row = int(piece[1])
+            col = 0
+            for i in range(len(columns)):
+                if piece[0] == columns[i]:
+                    col = i
+            index = (row-1)*8+col
+            piece_sence.append(index)
+
+        #need to remove edges of board for sense 
+        smart_sence = possible_sense[8:-8]
+        sides = []
+        for sence in smart_sence:
+            if sence % 8 == 0:
+                sides.append(sence)
+            if sence % 8 == 7:
+                sides.append(sence)
+
+        smart_sence = [i for i in smart_sence if i not in sides]
+
+        if seconds_left >= 400:     #6.6 or more minutes left in the game
+            middle_area = smart_sence[12:-12]
+            sides = []
+            for sence in middle_area:
+                if sence % 8 == 1:
+                    sides.append(sence)
+                if sence % 8 == 6:
+                    sides.append(sence)
+            middle_area = [i for i in middle_area if i not in sides]
+
+            avoid = []
+            for mid in middle_area:
+                if mid in piece_sence:
+                    avoid.append(mid)
+
+            if avoid:
+                avg = sum(avoid)/len(avoid)
+                sence = middle_area[min(range(len(middle_area)), key = lambda i: abs(middle_area[i]-avg))]
+            else:
+                sence = random.choice(middle_area)
+        else:  #less than 6.6 minutes left in the game
+
+            avoid = []
+            for spot in smart_sence:
+                if spot in piece_sence:
+                    avoid.append(spot)
+
+            if avoid:
+                avg = sum(avoid)/len(avoid)
+                sence = smart_sence[min(range(len(smart_sence)), key = lambda i: abs(smart_sence[i]-avg))]
+            else:
+                sence = random.choice(smart_sence)
+
+        return sence
         
     def handle_sense_result(self, sense_result):
         """
@@ -110,5 +177,4 @@ class MyAgent(Player):
         :param winner_color: Chess.BLACK/chess.WHITE -- the winning color
         :param win_reason: String -- the reason for the game ending
         """
-        # TODO: implement this method
-        pass
+        self.current_board = self.current_board.reset()  
