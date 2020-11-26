@@ -12,10 +12,11 @@ class MCTS:
         self.limit = time_limit
         self.team = player
         self.tree = None
+        self.moves = list(board.legal_moves)
 
     def search(self):
         start_time = time.time()
-        root = {'state': self.board_state, 'turn': self.team, 'num_wins': 0, 'num_sims': 0, 'children': []}
+        root = {'state': self.board_state, 'actions': self.moves, 'turn': self.team, 'num_wins': 0, 'num_sims': 0, 'children': []}
         while time.time() - start_time < self.limit:
             selected = self.sel(root)
             new_node = self.expand(selected)
@@ -34,12 +35,12 @@ class MCTS:
         while 1:
             curr_node['num_sims'] = curr_node['num_sims'] + 1
             if team == curr_node['turn']:
-                if result:
+                if result == 1:
                     curr_node['num_wins'] = curr_node['num_wins'] + 1
                 elif result == .5:
                     curr_node['num_wins'] = curr_node['num_wins'] + .5
             else:
-                if not result:
+                if result == 0:
                     curr_node['num_wins'] = curr_node['num_wins'] + 1
                 elif result == .5:
                     curr_node['num_wins'] = curr_node['num_wins'] + .5
@@ -50,9 +51,14 @@ class MCTS:
 
     def expand(self, node):
         board_copy = copy(node['state'])
-        move = random.choice(list(board_copy.legal_moves))
+        moves = node['actions'].copy()
+        if len(moves) == 0:
+            moves.append(chess.Move.null())
+        move = random.choice(moves)
+        moves.remove(move)
+        node['actions'] = moves
         board_copy.push(move)
-        return {'parent': node, 'move': move, 'state': board_copy, 'turn': node['turn'] * -1, 'num_wins': 0, 'num_sims': 0, 'children': []}
+        return {'parent': node, 'actions': list(board_copy.legal_moves), 'move': move, 'state': board_copy, 'turn': node['turn'] * -1, 'num_wins': 0, 'num_sims': 0, 'children': []}
 
     def sel(self, root):
         if len(root['children']) == 0:
@@ -83,10 +89,20 @@ class MCTS:
             if board_copy.is_game_over(claim_draw=True):
                 if board_copy.is_checkmate():
                     turn = board_copy.fen().split()[1]
-                    return 1 if turn == team else -1
+                    if team:
+                        if turn == 'w':
+                            return 0
+                        else:
+                            return 1
+                    else:
+                        if turn == 'w':
+                            return 1
+                        else:
+                            return 0
                 return .5
             else:
                 possible_moves = list(board_copy.legal_moves)
+                possible_moves.append(chess.Move.null())
                 next_move = random.choice(possible_moves)
                 board_copy.push(next_move)
                 curr_state = board_copy
