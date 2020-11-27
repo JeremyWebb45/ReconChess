@@ -2,16 +2,18 @@
 
 """
 File Name:      my_agent.py
-Authors:        TODO: Your names here!
-Date:           TODO: The date you finally started working on this.
+Authors:        Jeremy Webb
+Date:           11/6/20
 
 Description:    Python file for my agent.
 Source:         Adapted from recon-chess (https://pypi.org/project/reconchess/)
 """
 
+
+
 import random
-import chess
 from player import Player
+from mcts import MCTS
 
 
 # TODO: Rename this class to what you would like your bot to be named during the game.
@@ -19,8 +21,8 @@ class MyAgent(Player):
 
     def __init__(self):
 
-        self.current_board = None
         self.color = None
+        self.current_board = None
         
     def handle_game_start(self, color, board):
         """
@@ -30,9 +32,11 @@ class MyAgent(Player):
         :param board: chess.Board -- initial board state
         :return:
         """
-        # TODO: implement this method
-        self.current_board = board
+
+
         self.color = color
+        self.current_board = board
+        pass
         
     def handle_opponent_move_result(self, captured_piece, captured_square):
         """
@@ -41,9 +45,11 @@ class MyAgent(Player):
         :param captured_piece: bool - true if your opponents captured your piece with their last move
         :param captured_square: chess.Square - position where your piece was captured
         """
+
         #if captured_piece:
         moves = list(self.current_board.legal_moves)
         self.current_board.push(random.choice(moves))
+
 
 
     def choose_sense(self, possible_sense, possible_moves, seconds_left):
@@ -98,6 +104,7 @@ class MyAgent(Player):
             sence = random.choice(smart_sence)
 
         return sence
+
         
     def handle_sense_result(self, sense_result):
         """
@@ -113,7 +120,10 @@ class MyAgent(Player):
             (A6, None), (B6, None), (C8, None)
         ]
         """
-        # TODO: implement this method
+        print('\--------------Handle Sense--------------/')
+        print(sense_result)
+        # TODO: Sense the board, update our current board with this sense
+        # TODO: Fill in the rest of the board with guesses as to where the remaining unsensed enemy pieces are
         # Hint: until this method is implemented, any senses you make will be lost.
         pass
 
@@ -131,8 +141,15 @@ class MyAgent(Player):
         :example: choice = chess.Move(chess.G7, chess.G8, promotion=chess.KNIGHT) *default is Queen
         """
         # TODO: update this method
-        choice = random.choice(possible_moves)
-        return choice
+        print('\--------------Choose Move--------------/')
+        print(possible_moves)
+        print(list(self.current_board.legal_moves))
+        search_tree = MCTS(5, self.color, self.current_board)
+        search_tree.search()
+        move = search_tree.pick_move()['move']
+        self.current_board.push(move)
+
+        return move
         
     def handle_move_result(self, requested_move, taken_move, reason, captured_piece, captured_square):
         """
@@ -145,6 +162,8 @@ class MyAgent(Player):
         :param captured_piece: bool - true if you captured your opponents piece
         :param captured_square: chess.Square - position where you captured the piece
         """
+        print('\--------------Handle Move--------------/')
+        print(requested_move, taken_move, reason, captured_piece, captured_square)
         # TODO: implement this method
         pass
         
@@ -155,4 +174,9 @@ class MyAgent(Player):
         :param winner_color: Chess.BLACK/chess.WHITE -- the winning color
         :param win_reason: String -- the reason for the game ending
         """
-        self.current_board = self.current_board.reset()  
+
+        # TODO: implement this method
+        print('\--------------Game End--------------/')
+        print(winner_color)
+        print(win_reason)
+        pass
