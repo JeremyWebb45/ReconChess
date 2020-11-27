@@ -23,7 +23,7 @@ class MyAgent(Player):
 
         self.color = None
         self.current_board = None
-        
+
     def handle_game_start(self, color, board):
         """
         This function is called at the start of the game.
@@ -37,7 +37,7 @@ class MyAgent(Player):
         self.color = color
         self.current_board = board
         pass
-        
+
     def handle_opponent_move_result(self, captured_piece, captured_square):
         """
         This function is called at the start of your turn and gives you the chance to update your board.
@@ -63,49 +63,47 @@ class MyAgent(Player):
         :return: chess.SQUARE -- the center of 3x3 section of the board you want to sense
         :example: choice = chess.A1
         """
-        moves = list(self.current_board.legal_moves)
-        our_pieces = []
-        for move in moves:
-            pos = str(move)[0:2]
-            if pos not in our_pieces:
-                our_pieces.append(pos)
 
-        columns = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
-        piece_sence = []
-        for piece in our_pieces:
-            row = int(piece[1])
-            col = 0
-            for i in range(len(columns)):
-                if piece[0] == columns[i]:
-                    col = i
-            index = (row-1)*8+col
-            piece_sence.append(index)
-
-        #need to remove edges of board for sense 
-        smart_sence = possible_sense[8:-8]
+        #need to remove edges of board for sense
+        smart_sense = possible_sense[8:-8]
         sides = []
-        for sence in smart_sence:
-            if sence % 8 == 0:
-                sides.append(sence)
-            if sence % 8 == 7:
-                sides.append(sence)
+        for sense in smart_sense:
+            if sense % 8 == 0:
+                sides.append(sense)
+            if sense % 8 == 7:
+                sides.append(sense)
 
-        smart_sence = [i for i in smart_sence if i not in sides]
+        smart_sense = [i for i in smart_sense if i not in sides]
 
-        avoid = []
-        for spot in smart_sence:
-            if spot in piece_sence:
-                avoid.append(spot)
+        our_pieces = []
+        for square in possible_sense:
+            if self.current_board.color_at(square) == self.color:
+                our_pieces.append(square)
 
-        if avoid:
-            avg = sum(avoid)/len(avoid)
-            sence = smart_sence[min(range(len(smart_sence)), key = lambda i: abs(smart_sence[i]-avg))]
-        else:
-            sence = random.choice(smart_sence)
+        sense = random.choice(smart_sense)
 
-        return sence
+        # a 3x3 square around sence
+        sense_area = [sense-9, sense-8, sense-7, sense-1, sense, sense+1, sense+7, sense+8, sense+9]
 
-        
+        num_pieces = 0
+        for square in sense_area:
+            if self.current_board.color_at(square) == self.color:
+                num_pieces += 1
+
+        while num_pieces >= 5:
+            sense = random.choice(smart_sense)
+
+            # a 3x3 square around sence
+            sense_area = [sense-9, sense-8, sense-7, sense-1, sense, sense+1, sense+7, sense+8, sense+9]
+
+            num_pieces = 0
+            for square in sense_area:
+                if self.current_board.color_at(square) == self.color:
+                    num_pieces += 1
+
+        return sense
+
+
     def handle_sense_result(self, sense_result):
         """
         This is a function called after your picked your 3x3 square to sense and gives you the chance to update your
@@ -133,10 +131,10 @@ class MyAgent(Player):
 
         :param possible_moves: List(chess.Moves) -- list of acceptable moves based only on pieces
         :param seconds_left: float -- seconds left to make a move
-        
+
         :return: chess.Move -- object that includes the square you're moving from to the square you're moving to
         :example: choice = chess.Move(chess.F2, chess.F4)
-        
+
         :condition: If you intend to move a pawn for promotion other than Queen, please specify the promotion parameter
         :example: choice = chess.Move(chess.G7, chess.G8, promotion=chess.KNIGHT) *default is Queen
         """
@@ -150,7 +148,7 @@ class MyAgent(Player):
         self.current_board.push(move)
 
         return move
-        
+
     def handle_move_result(self, requested_move, taken_move, reason, captured_piece, captured_square):
         """
         This is a function called at the end of your turn/after your move was made and gives you the chance to update
@@ -166,7 +164,7 @@ class MyAgent(Player):
         print(requested_move, taken_move, reason, captured_piece, captured_square)
         # TODO: implement this method
         pass
-        
+
     def handle_game_end(self, winner_color, win_reason):  # possible GameHistory object...
         """
         This function is called at the end of the game to declare a winner.
