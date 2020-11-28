@@ -21,7 +21,7 @@ class MCTS:
             selected = self.sel(root)
             new_node = self.expand(selected)
             selected['children'].append(new_node)
-            result = self.sim(new_node['state'], self.team)
+            result = self.sim(new_node['state'].copy(), self.team)
             self.backprop(new_node, result)
         self.tree = root
 
@@ -31,7 +31,7 @@ class MCTS:
 
     def backprop(self, node, result):
         curr_node = node
-        team = node['turn'] * -1
+        team = node['turn']
         while 1:
             curr_node['num_sims'] = curr_node['num_sims'] + 1
             if team == curr_node['turn']:
@@ -58,7 +58,7 @@ class MCTS:
         moves.remove(move)
         node['actions'] = moves
         board_copy.push(move)
-        return {'parent': node, 'actions': list(board_copy.legal_moves), 'move': move, 'state': board_copy, 'turn': node['turn'] * -1, 'num_wins': 0, 'num_sims': 0, 'children': []}
+        return {'parent': node, 'actions': list(board_copy.pseudo_legal_moves), 'move': move, 'state': board_copy, 'turn': node['turn'] * -1, 'num_wins': 0, 'num_sims': 0, 'children': []}
 
     def sel(self, root):
         if len(root['children']) == 0:
@@ -82,30 +82,25 @@ class MCTS:
         else:
             return node['num_wins'] / node['num_sims'] + np.sqrt(2) * np.sqrt(np.log(node['parent']['num_sims']) / node['num_sims'])
 
-    def sim(self, board, team):
+    def sim(self, board, team, n=150):
         curr_state = board
-        while 1:
+        i = 0
+        while i < n:
             board_copy = copy(curr_state)
-            if board_copy.is_game_over(claim_draw=True):
-                if board_copy.is_checkmate():
-                    turn = board_copy.fen().split()[1]
-                    if team:
-                        if turn == 'w':
-                            return 0
-                        else:
-                            return 1
-                    else:
-                        if turn == 'w':
-                            return 1
-                        else:
-                            return 0
-                return .5
+            if board_copy.fen().split()[0].lower().count('k') < 2:
+                winner = chess.WHITE if board.copy().fen().split()[0].count('k') == 0 else chess.BLACK
+                if winner == team:
+                    return 1
+                else:
+                    return 0
             else:
-                possible_moves = list(board_copy.legal_moves)
+                possible_moves = list(board_copy.pseudo_legal_moves)
                 possible_moves.append(chess.Move.null())
                 next_move = random.choice(possible_moves)
                 board_copy.push(next_move)
                 curr_state = board_copy
+            i = i + 1
+        return .5
 
     def build_example_tree(self, board, player):
         root = {'state': board, 'turn': player, 'num_wins': 11, 'num_sims': 21, 'children': []}
